@@ -54,6 +54,7 @@ export default modifier<OverscrollGestureSignature>(
     }
 
     let gestureStartedAtOverscrollEdge = false;
+    let indicatorVisible = false;
 
     const getIndicator = () =>
       element.querySelector<HTMLElement>('[data-overscroll-indicator]');
@@ -63,7 +64,10 @@ export default modifier<OverscrollGestureSignature>(
 
       if (indicator) {
         indicator.style.height = '0px';
+        indicator.dataset['overscrollReady'] = 'false';
       }
+
+      indicatorVisible = false;
     };
 
     const hideIndicatorDebounced = debounce(hideIndicator, named.delay ?? 1000);
@@ -76,11 +80,40 @@ export default modifier<OverscrollGestureSignature>(
       }
 
       indicator.style.height = 'var(--control-default-height)';
+      indicator.dataset['overscrollReady'] = 'true';
+      indicatorVisible = true;
       void hideIndicatorDebounced();
+    };
+
+    const updateIndicator = (pullDistance: number, isReady: boolean) => {
+      const indicator = getIndicator();
+
+      if (!indicator) {
+        return;
+      }
+
+      const nextHeight = Math.min(
+        Math.max(pullDistance, 0),
+        named.minimumPullDistance,
+      );
+
+      indicator.style.height = `${nextHeight}px`;
+      indicator.dataset['overscrollReady'] = String(isReady);
+      indicatorVisible = nextHeight > 0;
     };
 
     const handleDrag = (state: DragState) => {
       const scrollContainer = resolveScrollContainer(named.scrollContainer);
+
+      const [deltaX, deltaY] = state.movement;
+
+      const direction = deltaY > 0 ? 'down' : 'up';
+
+      const isVerticalGesture = Math.abs(deltaY) > Math.abs(deltaX);
+      const pullDistance = Math.abs(deltaY);
+      const isMatchingDirection = direction === named.direction;
+      const meetsMinimumPullDistance =
+        pullDistance >= named.minimumPullDistance;
 
       if (state.first) {
         const { scrollTop, clientHeight, scrollHeight } = scrollContainer;
@@ -94,22 +127,31 @@ export default modifier<OverscrollGestureSignature>(
         });
       }
 
-      if (!state.last || !gestureStartedAtOverscrollEdge) {
+      if (!gestureStartedAtOverscrollEdge) {
+        if (indicatorVisible) {
+          hideIndicator();
+        }
+
         return;
       }
 
-      const [deltaX, deltaY] = state.movement;
+      if (!state.last) {
+        if (isVerticalGesture && isMatchingDirection) {
+          updateIndicator(pullDistance, meetsMinimumPullDistance);
+        } else if (indicatorVisible) {
+          hideIndicator();
+        }
 
-      if (
-        Math.abs(deltaY) < named.minimumPullDistance ||
-        Math.abs(deltaY) <= Math.abs(deltaX)
-      ) {
         return;
       }
 
-      const direction = deltaY > 0 ? 'down' : 'up';
+      if (!meetsMinimumPullDistance || !isVerticalGesture) {
+        hideIndicator();
+        return;
+      }
 
       if (direction !== named.direction) {
+        hideIndicator();
         return;
       }
 

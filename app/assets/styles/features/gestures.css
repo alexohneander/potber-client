@@ -31,10 +31,25 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
   overflow: hidden;
   padding: 0 1rem;
   z-index: 99;
   background-color: var(--color-nav);
+  opacity: 0;
+  transition:
+    200ms height ease,
+    160ms opacity ease,
+    160ms background-color ease !important;
+}
+
+.overscroll-container-indicator[data-overscroll-ready='false'] {
+  opacity: 0.75;
+}
+
+.overscroll-container-indicator[data-overscroll-ready='true'] {
+  opacity: 1;
+  background-color: var(--color-secondary);
 }
 
 .overscroll-container-indicator[data-direction='up'] {
@@ -48,4 +63,8 @@ body {
 
 .overscroll-container-indicator * {
   color: var(--color-text-subtle);
+}
+
+.overscroll-container-indicator[data-overscroll-ready='true'] * {
+  color: var(--color-text-on-secondary);
 }
