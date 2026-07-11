@@ -3,6 +3,7 @@ import ThreadController from 'potber-client/controllers/authenticated/thread';
 import SlowRoute from '../base/slow';
 import type Transition from '@ember/routing/transition';
 import { service } from '@ember/service';
+import { set } from '@ember/object';
 import ThreadStore from 'potber-client/services/stores/thread';
 import SettingsService from 'potber-client/services/settings';
 import { sleep } from 'potber-client/utils/misc';
@@ -47,10 +48,10 @@ export default class ThreadRoute extends SlowRoute {
 
   resetController(controller: ThreadController) {
     // Query parameters are sticky by default, so we need to reset them
-    controller.TID = '';
-    controller.page = '';
-    controller.PID = '';
-    controller.scrollToBottom = '';
+    set(controller, 'TID', '');
+    set(controller, 'page', '');
+    set(controller, 'PID', '');
+    set(controller, 'scrollToBottom', '');
   }
 
   async model(params: Params, transition: Transition) {
